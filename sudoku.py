@@ -61,6 +61,7 @@ class SudokuGame():
     '''
 
     def __init__(self, board_file):
+        self.board_file = board_file
         self.board = SudokuBoard(board_file).board
 
     def game_start(self):
@@ -122,7 +123,7 @@ class SudokuGUI(Frame):
         self.game = game  # Class Object Attribute
         self.parent = parent  # Same for any instance of a class
         Frame.__init__(self, parent)
-        self.configure(bg='yellow')
+        self.configure(bg='light goldenrod')
         self.row, self.col = 0, 0
 
         self.__initUI()
@@ -130,52 +131,92 @@ class SudokuGUI(Frame):
     def __initUI(self):
         self.parent.title("Sudoku")
         self.pack(fill=BOTH, expand=True)
-        self.canvas = Canvas(self, width=WIDTH, height=HEIGHT, #Canvas size = 490x490
-                             bg='red')  # Place canvas on frame
+        self.canvas = Canvas(self, width=WIDTH, height=HEIGHT,
+                             bg='lemonchiffon')  # Canvas size = 490x490
+        # Place canvas on frame
         self.canvas.pack(fill=BOTH, side=TOP)
 
         self.button_frame = Frame(self)
-        self.button_frame.pack(side = LEFT, padx = 10)
+        self.button_frame.pack(side=LEFT, padx=10)
 
-        clear_button = Button(self.button_frame, text='Clear Answers')
-                             #command=self._clear_answers)
-        clear_button.pack(fill = BOTH)
+        clear_button = Button(
+            self.button_frame, text='Clear Answers', command=self.clear_answers)
+        clear_button.pack(fill=BOTH)
 
-        solve_button = Button(self.button_frame, text ="Solve Puzzle")
-        solve_button.pack(fill = BOTH)
+        # command = self.game.solve())
+        solve_button = Button(self.button_frame, text='Solve Puzzle')
+        solve_button.pack(fill=BOTH)
 
         self.draw_grid()
         self.draw_puzzle()
 
-        #self.canvas.bind("<Button-1>", self.cell_clicked)
+        self.canvas.bind("<Button-1>", self.cell_clicked)
         #self.canvas.bind("<Key>", self.key_pressed)
 
     def draw_grid(self):
         """
         Draws grid divided with blue lines into 3x3 squares
         """
-        for i in range(0,10):
+        for i in range(0, 10):
             color = "blue" if i % 3 == 0 else "gray"
 
-            x0 = MARGIN + i * SIDE
+            # Vertical
+            x0 = MARGIN + i * SIDE  # (20,20) , (20,530)
             y0 = MARGIN
             x1 = MARGIN + i * SIDE
             y1 = HEIGHT - MARGIN
             self.canvas.create_line(x0, y0, x1, y1, fill=color)
 
-            # x0 = MARGIN
-            # y0 = MARGIN + i * SIDE
-            # x1 = WIDTH - MARGIN
-            # y1 = MARGIN + i * SIDE
-            # self.canvas.create_line(x0, y0, x1, y1, fill=color)
+            # Horizontal
+            x0 = MARGIN
+            y0 = MARGIN + i * SIDE
+            x1 = WIDTH - MARGIN
+            y1 = MARGIN + i * SIDE
+            self.canvas.create_line(x0, y0, x1, y1, fill=color)
 
     def draw_puzzle(self):
-        pass
+        self.canvas.delete('numbers')
+        for row in range(0, 9):
+            for column in range(0, 9):
+                answer = self.game.game_board[row][column]
+                original = self.game.board[row][column]
+                if answer != 0:
+                    # continue here
+                    x = MARGIN + SIDE / 2 + (SIDE * column)
+                    y = MARGIN + SIDE / 2 + (SIDE * row)
 
-    def cell_clicked(self):
-        pass
+                    # Differentiate between original board & game board to have different colors
+                    if answer == original:
+                        color = "black"
+                    else:
+                        color = "sea green"
+
+                    self.canvas.create_text(
+                        x, y, text=answer, tag='numbers', fill=color)
+
+    def clear_answers(self):
+        self.game.game_start()
+        self.canvas.delete('Victory!')
+        self.draw_puzzle()
+
+    def cell_clicked(self, event):
+        if self.game.game_over == True:
+            return None
+
+        x, y = event.x, event.y
+        print(x, y)
+        # Check if click is within board
+        if (MARGIN < x < MARGIN + SIDE * 9 and MARGIN < y < MARGIN + SIDE * 9):
+            self.canvas.focus_set
+            # get row / column
+            row, col = (y - MARGIN) / SIDE, (x - MARGIN) / SIDE
+
+            print(row, col)
 
     def key_pressed(self):
+        pass
+
+    def victory(self):
         pass
 
 
@@ -186,5 +227,6 @@ with open('board.sudoku.txt', 'r') as board_file:
 
     root = Tk()
     SudokuGUI(root, game)
-    root.geometry("%dx%d" % (WIDTH, HEIGHT + 80)) #width = 490 , height = 570
+    # 80 is the space below the main board
+    root.geometry("%dx%d" % (WIDTH, HEIGHT + 80))
     root.mainloop()
