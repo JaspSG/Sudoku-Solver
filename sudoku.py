@@ -77,6 +77,7 @@ class SudokuGame():
 #  check_win() checks by by pulling out a row/column/grid of data from the board in the form of : [a,b,c,d,...9]
 #  and uses the check_block() to compare with a set of values {1,2,3,4,5,6,7,8,9} to return T/F
 
+
     def check_win(self):
         if self.check_row() or self.check_column() or self.check_grid() == False:
             return False
@@ -124,6 +125,7 @@ class SudokuGUI(Frame):
         self.parent = parent  # Same for any instance of a class
         Frame.__init__(self, parent)
         self.configure(bg='light goldenrod')
+        # Current cell selection (-1 means not selected, works with draw_cursor())
         self.row, self.col = 0, 0
 
         self.__initUI()
@@ -151,7 +153,7 @@ class SudokuGUI(Frame):
         self.draw_puzzle()
 
         self.canvas.bind("<Button-1>", self.cell_clicked)
-        #self.canvas.bind("<Key>", self.key_pressed)
+        self.canvas.bind("<Key>", self.key_pressed)
 
     def draw_grid(self):
         """
@@ -193,10 +195,12 @@ class SudokuGUI(Frame):
 
                     self.canvas.create_text(
                         x, y, text=answer, tag='numbers', fill=color)
+        #debug
+        self.victory()
 
     def clear_answers(self):
         self.game.game_start()
-        self.canvas.delete('Victory!')
+        self.canvas.delete('victory')
         self.draw_puzzle()
 
     def cell_clicked(self, event):
@@ -207,26 +211,55 @@ class SudokuGUI(Frame):
         print(x, y)
         # Check if click is within board
         if (MARGIN < x < MARGIN + SIDE * 9 and MARGIN < y < MARGIN + SIDE * 9):
-            self.canvas.focus_set
+            self.canvas.focus_set()
             # get row / column
-            row, col = (y - MARGIN) / SIDE, (x - MARGIN) / SIDE
-
+            row, col = (y - MARGIN) // SIDE, (x - MARGIN) // SIDE
             print(row, col)
 
-    def key_pressed(self):
-        pass
+            # if cell was selected already - deselect it
+            if (row, col) == (self.row, self.col):
+                self.row, self.col = -1, -1
+            elif self.game.game_board[row][col] == 0:
+                self.row, self.col = row, col
+
+        self.draw_cursor()
+
+    def draw_cursor(self):
+        self.canvas.delete('cursor')  # Delete the tags cursor
+        if self.row >= 0 and self.col >= 0:
+            x0 = MARGIN + SIDE * self.col
+            y0 = MARGIN + SIDE * self.row
+            x1 = MARGIN + SIDE + self.col * SIDE
+            y1 = MARGIN + SIDE + self.row * SIDE
+            self.canvas.create_rectangle(x0,y0,x1,y1, outline = 'red', tag = 'cursor')
+
+    def key_pressed(self, event):
+        if self.game.game_over:
+            return
+        if event.char in '1234567890' and self.row >= 0 and self.col >= 0:
+            self.game.game_board[self.row][self.col] = int(event.char)
+            #reset cursor
+            self.row , self.col = -1 , -1
+            self.draw_puzzle()
+            self.draw_cursor()
+            if self.game.check_win == True:
+                print ("VICTORY")
+                self.victory()
 
     def victory(self):
-        pass
+        x0 = y0 = MARGIN + SIDE * 2
+        x1 = y1 = MARGIN + SIDE * 7
+        self.canvas.create_oval(x0,y0,x1,y1, fill = 'dark orange', outline = 'orange', tag = 'victory')
+        self.canvas.create_text(WIDTH / 2 , HEIGHT / 2, text = ' YOU WIN!' , tag = 'victory', fill = 'white', font = 50)
 
+if __name__ == '__main__':
+    #         Test
+    with open('board.sudoku.txt', 'r') as board_file:
+        game = SudokuGame(board_file)
+        game.game_start()
 
-#         Test
-with open('board.sudoku.txt', 'r') as board_file:
-    game = SudokuGame(board_file)
-    game.game_start()
-
-    root = Tk()
-    SudokuGUI(root, game)
-    # 80 is the space below the main board
-    root.geometry("%dx%d" % (WIDTH, HEIGHT + 80))
-    root.mainloop()
+        root = Tk()
+        SudokuGUI(root, game)
+        # 80 is the space below the main board
+        root.geometry("%dx%d" % (WIDTH, HEIGHT + 80))
+        root.mainloop()

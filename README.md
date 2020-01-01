@@ -1,4 +1,7 @@
 # Sudoku-Solver
+
+#Disclaimer The following programme is coded along side the tutorial from : http://newcoder.io/gui/
+
  A programme to solve any given Sudoku Puzzle.
 
 Objectives of this Project:
@@ -29,7 +32,7 @@ Steps for the game:
 
 Step 4 considerations:
 Backtrack every input or store the first solution?
-Test by timeit?s
+Test by timeit?
 
 Python features reflection:
 argparse library ?
@@ -39,5 +42,6 @@ inherit exception class to create specific program error and raising them.
 isdigit(): checks if string contains digits only
 sets() : a collection which is unordered and unindexed.
 List comprehensions (grid extraction)
+Tkinter event management focus.set() method & event parameter
 
 Class object attributes, same for any instance of a class(before init of a class)
