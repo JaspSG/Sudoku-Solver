@@ -17,6 +17,23 @@ class SudokuError(Exception):
 
 #Objects#
 
+def parse_arguments():
+    """
+    Parses arguments of the form:
+        sudoku.py <board name>
+    Where `board name` must be in the `BOARD` list
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--board",
+                        default = 'debug',
+                        help="Desired board name",
+                        type=str)
+
+    args = parser.parse_args()
+
+    # Creates a dictionary of keys = argument flag, and value = argument
+    value = (vars(args))
+    return (value['board'])
 
 class SudokuBoard():
     '''
@@ -195,8 +212,6 @@ class SudokuGUI(Frame):
 
                     self.canvas.create_text(
                         x, y, text=answer, tag='numbers', fill=color)
-        #debug
-        self.victory()
 
     def clear_answers(self):
         self.game.game_start()
@@ -252,14 +267,19 @@ class SudokuGUI(Frame):
         self.canvas.create_oval(x0,y0,x1,y1, fill = 'dark orange', outline = 'orange', tag = 'victory')
         self.canvas.create_text(WIDTH / 2 , HEIGHT / 2, text = ' YOU WIN!' , tag = 'victory', fill = 'white', font = 50)
 
-if __name__ == '__main__':
-    #         Test
-    with open('board.sudoku.txt', 'r') as board_file:
-        game = SudokuGame(board_file)
-        game.game_start()
 
-        root = Tk()
-        SudokuGUI(root, game)
-        # 80 is the space below the main board
-        root.geometry("%dx%d" % (WIDTH, HEIGHT + 80))
-        root.mainloop()
+if __name__ == '__main__':
+    board_name = parse_arguments()
+    
+    try:
+        with open('%s.sudoku.txt'%board_name, 'r') as board_file:
+            game = SudokuGame(board_file)
+            game.game_start()
+    except:
+        raise SudokuError('No such board exists')
+
+    root = Tk()
+    SudokuGUI(root, game)
+    # 80 is the space below the main board
+    root.geometry("%dx%d" % (WIDTH, HEIGHT + 80))
+    root.mainloop()
