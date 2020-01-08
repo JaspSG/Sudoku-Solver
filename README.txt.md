@@ -6,7 +6,8 @@
 
  run this programme at the command line with:
  python sudoku.py
- #with choice of board:
+ 
+ with choice of board:
  python sudoku.py board (board name)
 
 Objectives of this Project:
