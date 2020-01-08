@@ -1,5 +1,6 @@
 import argparse
 from tkinter import BOTH, BOTTOM, TOP, LEFT, RIGHT, Button, Canvas, Frame, Tk
+import time
 
 # Globals
 MARGIN = 20  # Pixels around the board
@@ -17,6 +18,7 @@ class SudokuError(Exception):
 
 #Objects#
 
+
 def parse_arguments():
     """
     Parses arguments of the form:
@@ -25,7 +27,7 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--board",
-                        default = 'debug',
+                        default='hard',
                         help="Desired board name",
                         type=str)
 
@@ -34,6 +36,7 @@ def parse_arguments():
     # Creates a dictionary of keys = argument flag, and value = argument
     value = (vars(args))
     return (value['board'])
+
 
 class SudokuBoard():
     '''
@@ -94,7 +97,6 @@ class SudokuGame():
 #  check_win() checks by by pulling out a row/column/grid of data from the board in the form of : [a,b,c,d,...9]
 #  and uses the check_block() to compare with a set of values {1,2,3,4,5,6,7,8,9} to return T/F
 
-
     def check_win(self):
         if self.check_row() or self.check_column() or self.check_grid() == False:
             return False
@@ -126,10 +128,6 @@ class SudokuGame():
                                      for row in range(3*x, 3*(x+1))
                                      for column in range(3*y, 3*(y+1))]) != True:
                     return False
-
-    def solve():
-        # backtracking
-        pass
 
 
 class SudokuGUI(Frame):
@@ -163,7 +161,8 @@ class SudokuGUI(Frame):
         clear_button.pack(fill=BOTH)
 
         # command = self.game.solve())
-        solve_button = Button(self.button_frame, text='Solve Puzzle')
+        solve_button = Button(
+            self.button_frame, text='Solve Puzzle', command=self.solve)
         solve_button.pack(fill=BOTH)
 
         self.draw_grid()
@@ -246,33 +245,84 @@ class SudokuGUI(Frame):
             y0 = MARGIN + SIDE * self.row
             x1 = MARGIN + SIDE + self.col * SIDE
             y1 = MARGIN + SIDE + self.row * SIDE
-            self.canvas.create_rectangle(x0,y0,x1,y1, outline = 'red', tag = 'cursor')
+            self.canvas.create_rectangle(
+                x0, y0, x1, y1, outline='red', tag='cursor')
 
     def key_pressed(self, event):
         if self.game.game_over:
             return
         if event.char in '1234567890' and self.row >= 0 and self.col >= 0:
             self.game.game_board[self.row][self.col] = int(event.char)
-            #reset cursor
-            self.row , self.col = -1 , -1
+            # reset cursor
+            self.row, self.col = -1, -1
             self.draw_puzzle()
             self.draw_cursor()
-            if self.game.check_win == True:
-                print ("VICTORY")
+            if self.game.check_win() == True:
+                print("VICTORY")
                 self.victory()
 
     def victory(self):
         x0 = y0 = MARGIN + SIDE * 2
         x1 = y1 = MARGIN + SIDE * 7
-        self.canvas.create_oval(x0,y0,x1,y1, fill = 'dark orange', outline = 'orange', tag = 'victory')
-        self.canvas.create_text(WIDTH / 2 , HEIGHT / 2, text = ' YOU WIN!' , tag = 'victory', fill = 'white', font = 50)
+        self.canvas.create_oval(
+            x0, y0, x1, y1, fill='dark orange', outline='orange', tag='victory')
+        self.canvas.create_text(
+            WIDTH / 2, HEIGHT / 2, text=' YOU WIN!', tag='victory', fill='white', font=50)
+
+    def solve(self):
+
+        position = self.find_empty()
+
+        if not position:
+            return True
+
+        else:
+            row, col = position
+
+            for number in range(1, 10):
+                if self.valid(self.game.game_board, number, (row, col)):
+                    self.game.game_board[row][col] = number
+
+                    if self.solve():
+                        self.draw_puzzle()
+                        return True
+
+                self.game.game_board[row][col] = 0
+
+        return False
+
+    def find_empty(self):
+
+        for i in range(len(self.game.game_board)):
+            for j in range(len(self.game.game_board)):
+                if self.game.game_board[i][j] == 0:
+                    return (i, j)
+
+    def valid(self, board, num, pos):
+        for col in range(0, 9):
+            if board[pos[0]][col] == num and pos[1] != col:
+                return False
+
+        for row in range(0, 9):
+            if board[row][pos[1]] == num and pos[0] != row:
+                return False
+
+        grid_x = pos[1] // 3
+        grid_y = pos[0] // 3
+
+        for i in range(grid_y * 3, grid_y * 3 + 3):
+            for j in range(grid_x*3, grid_x * 3 + 3):
+                if board[i][j] == num and (i, j) != pos:
+                    return False
+
+        return True
 
 
 if __name__ == '__main__':
     board_name = parse_arguments()
-    
+
     try:
-        with open('%s.sudoku.txt'%board_name, 'r') as board_file:
+        with open('%s.sudoku.txt' % board_name, 'r') as board_file:
             game = SudokuGame(board_file)
             game.game_start()
     except:
