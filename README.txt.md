@@ -18,7 +18,9 @@ Objectives of this Project:
 How it works:
 1.  Programme starts off with basic Sudoku Puzzle.
 2.  Play the game.
-3.  Press (Spacebar?) to watch algorithm solve the puzzle.
+4.  If all cells are filled in, a victory tab will appear, else press clear puzzle to try again.
+3.  Press Solve puzzle button to solve the puzzle.
+
 
 
 Steps for the game:
